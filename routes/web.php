@@ -12,7 +12,7 @@ Route::middleware('auth')->group(function () {
         $menuDashboard = 'active';
 
         return view('dashboard', compact('menuDashboard'));
-    });
+    })->name('dashboard');
 
     Route::resource('flower', FlowerController::class)
         ->middleware('auth');
