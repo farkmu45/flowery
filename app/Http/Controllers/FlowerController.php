@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Flower;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class FlowerController extends Controller
 {
@@ -41,16 +42,16 @@ class FlowerController extends Controller
     {
         $request->validate([
             'flower_name' => 'required',
-            'picture' => 'required',
+            'picture' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'character' => 'required',
             'meaning' => 'required',
             'details' => 'required',
         ]);
 
-        $flower = Flower::create($request->all());
+        $flower = Flower::create($request->except('picture'));
 
         if ($request->hasFile('picture')) {
-            $storedFile = $request->file('picture')->storePublicly();
+            $storedFile = $request->file('picture')->store();
             $flower->picture = $storedFile;
             $flower->save();
         }
@@ -97,12 +98,41 @@ class FlowerController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $request->validate([
+            'flower_name' => 'required',
+            'picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'character' => 'required',
+            'meaning' => 'required',
+            'details' => 'required',
+        ]);
+
         $flower = Flower::find($id);
-        $flower->update($request->all());
+        if (!$flower) {
+            return redirect()->route('flower.index')
+                ->with('error_message', 'Flower with ID ' . $id . ' not found');
+        }
+
+        // Handle picture update
+        if ($request->hasFile('picture')) {
+            // Delete old picture if it exists
+            if ($flower->picture && Storage::disk('s3')->exists($flower->picture)) {
+                Storage::disk('s3')->delete($flower->picture);
+            }
+
+            // Store new picture
+            $storedFile = $request->file('picture')->store('flowers', 's3');
+            $flower->picture = $storedFile;
+        }
+
+        // Update other fields
+        $flower->flower_name = $request->flower_name;
+        $flower->character = $request->character;
+        $flower->meaning = $request->meaning;
+        $flower->details = $request->details;
+        $flower->save();
 
         return redirect()->route('flower.index')
-            ->with('success_message', 'Successfully change a Flower Data');
-
+            ->with('success_message', 'Successfully updated flower data');
     }
 
     /**
@@ -114,10 +144,20 @@ class FlowerController extends Controller
     public function destroy(string $id)
     {
         $flower = Flower::find($id);
+
+        if (!$flower) {
+            return redirect()->route('flower.index')
+                ->with('error_message', 'Flower with ID ' . $id . ' not found');
+        }
+
+        // Delete the image from S3 storage if it exists
+        if ($flower->picture && Storage::disk('s3')->exists($flower->picture)) {
+            Storage::disk('s3')->delete($flower->picture);
+        }
+
         $flower->delete();
 
         return redirect()->route('flower.index')
-            ->with('success_message', 'List of Flower successfully deleted');
-
+            ->with('success_message', 'Flower successfully deleted');
     }
 }

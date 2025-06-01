@@ -32,7 +32,7 @@
                     <td>{{ $key + 1 }}</td>
                     <td>{{ $flower->flower_name }}</td>
                     <td>
-                      <img src="{{ asset($flower->picture) }}" alt="" style="width: 100px">
+                      <img src="{{ Storage::disk('s3')->url($flower->picture) }}" alt="" style="width: 100px">
                     </td>
                     <td>{{ $flower->character }}</td>
                     <td>{{ $flower->meaning }}</td>
