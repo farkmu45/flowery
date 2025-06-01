@@ -48,7 +48,7 @@ class FlowerController extends Controller
             'details' => 'required',
         ]);
 
-        $flower = Flower::create($request->except('picture'));
+        $flower = Flower::create($request->all());
 
         if ($request->hasFile('picture')) {
             $storedFile = $request->file('picture')->store();

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Flower;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -8,7 +9,7 @@ Route::get('flowers', function () {
     $flowers = Flower::all()->map(fn($flower) => [
         'id' => $flower->id,
         'name' => $flower->flower_name,
-        'picture' => asset($flower->picture),
+        'picture' => Storage::url($flower->picture),
         'character' => $flower->character,
         'meaning' => $flower->meaning,
         'details' => $flower->details,
