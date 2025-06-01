@@ -48,9 +48,10 @@ class FlowerController extends Controller
         ]);
 
         $flower = Flower::create($request->all());
+
         if ($request->hasFile('picture')) {
-            $request->file('picture')->move('picflower/', $request->file('picture')->getClientOriginalName());
-            $flower->picture = $request->file('picture')->getClientOriginalName();
+            $storedFile = $request->file('picture')->storePublicly();
+            $flower->picture = $storedFile;
             $flower->save();
         }
 
